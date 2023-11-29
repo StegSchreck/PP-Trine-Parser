@@ -24,6 +24,9 @@ def load_loan_transactions_from_csv(folder: str, filename: str) -> list:
 
 
 def convert_csv_row_to_transaction(headers, row) -> Optional[dict]:
+    if not row[headers.index("Date")]:
+        # ignore lines with no date (reserved investments)
+        return None
     transaction = dict()
     transaction_date = datetime.datetime.strptime(row[headers.index("Date")], '%m/%d/%Y')
     transaction['date'] = transaction_date.strftime('%Y-%m-%d')
