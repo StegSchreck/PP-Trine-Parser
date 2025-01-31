@@ -7,6 +7,9 @@ from typing import Optional
 
 TIMESTAMP: str = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
 CSV_HEADER: str = 'Datum,Wert,Buchungswährung,Typ,Notiz\n'
+REPAID_INTEREST = "RepaidInterest"
+LATE_FEE = "LateFee"
+DATE = "Date"
 
 
 def load_loan_transactions_from_csv(folder: str, filename: str) -> list:
@@ -24,14 +27,17 @@ def load_loan_transactions_from_csv(folder: str, filename: str) -> list:
 
 
 def convert_csv_row_to_transaction(headers, row) -> Optional[dict]:
-    if not row[headers.index("Date")]:
+    if not row[headers.index(DATE)]:
         # ignore lines with no date (reserved investments)
         return None
     transaction = dict()
-    transaction_date = datetime.datetime.strptime(row[headers.index("Date")], '%m/%d/%Y')
+    if "/" in row[headers.index(DATE)]:
+        transaction_date = datetime.datetime.strptime(row[headers.index(DATE)], '%m/%d/%Y')
+    else:
+        transaction_date = datetime.datetime.strptime(row[headers.index(DATE)], '%Y-%m-%d')
     transaction['date'] = transaction_date.strftime('%Y-%m-%d')
-    interest: float = float(row[headers.index("Repaid interest")]) if row[headers.index("Repaid interest")] else 0.0
-    late_fees = float(row[headers.index("Late fee")]) if row[headers.index("Late fee")] else 0.0
+    interest: float = float(row[headers.index(REPAID_INTEREST)]) if REPAID_INTEREST in headers and row[headers.index(REPAID_INTEREST)] else 0.0
+    late_fees = float(row[headers.index(LATE_FEE)]) if LATE_FEE in headers and row[headers.index(LATE_FEE)] else 0.0
     transaction['value'] = interest + late_fees
     transaction['type'] = 'Zinsen'
     transaction['id'] = f'{row[headers.index("Type")]} - {row[headers.index("Loan")]}'
